@@ -1,0 +1,238 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "server": { "$ref": "#/$defs/server" },
+    "security": { "$ref": "#/$defs/security" },
+    "tls": { "$ref": "#/$defs/tls" },
+    "logging": { "$ref": "#/$defs/logging" },
+    "tracing": { "$ref": "#/$defs/tracing" },
+    "metrics": { "$ref": "#/$defs/metrics" },
+    "languages": { "$ref": "#/$defs/languages" },
+    "http2": { "$ref": "#/$defs/http2" },
+    "http3": { "$ref": "#/$defs/http3" },
+    "cache": { "$ref": "#/$defs/cache" },
+    "mime_types": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "tenants": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-zA-Z0-9._-]+$": { "$ref": "#/$defs/tenant" }
+      }
+    },
+    "includes": { "$ref": "#/$defs/includes" }
+  },
+  "required": ["server"],
+  "$defs": {
+    "server": {
+      "type": "object",
+      "properties": {
+        "listen": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": ["127.0.0.1:8080"]
+        },
+        "worker_threads": { "type": "integer", "minimum": 1, "default": 4 },
+        "max_request_body_mb": { "type": "integer", "minimum": 1, "default": 10 },
+        "max_header_size_kb": { "type": "integer", "minimum": 1, "default": 8 },
+        "keep_alive_timeout_sec": { "type": "integer", "minimum": 1, "default": 75 },
+        "max_keep_alive_requests": { "type": "integer", "minimum": 1, "default": 1000 },
+        "shutdown_timeout_sec": { "type": "integer", "minimum": 1, "default": 30 },
+        "directory_listing": { "type": "boolean", "default": false },
+        "acme": { "$ref": "#/$defs/acme" }
+      }
+    },
+    "acme": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean", "default": false },
+        "email": { "type": "string", "format": "email" },
+        "dir": { "type": "string", "default": "~/.do/acme" },
+        "staging": { "type": "boolean", "default": false }
+      }
+    },
+    "security": {
+      "type": "object",
+      "properties": {
+        "dev_mode": { "type": "boolean", "default": false },
+        "allowed_file_extensions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [".html", ".js", ".css", ".png", ".jpg", ".jpeg", ".gif", ".ico", ".svg", ".json", ".txt", ".xml", ".wasm"]
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "hsts": { "type": "boolean", "default": true },
+            "csp": { "type": "string" },
+            "frame_options": { "type": "string", "default": "DENY" },
+            "content_type_options": { "type": "boolean", "default": true }
+          }
+        }
+      }
+    },
+    "tls": {
+      "type": "object",
+      "properties": {
+        "min_version": { "type": "string", "default": "TLSv1.3" },
+        "ciphers": {
+          "type": "string",
+          "default": "TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384"
+        },
+        "prefer_server_ciphers": { "type": "boolean", "default": true }
+      }
+    },
+    "logging": {
+      "type": "object",
+      "properties": {
+        "format": { "type": "string", "enum": ["json", "text"], "default": "json" },
+        "level": { "type": "string", "enum": ["debug", "info", "warn", "error"], "default": "info" },
+        "file": { "type": "string" },
+        "max_size_mb": { "type": "integer", "minimum": 1, "default": 100 },
+        "max_files": { "type": "integer", "minimum": 1, "default": 10 }
+      }
+    },
+    "tracing": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean", "default": false },
+        "header_name": { "type": "string", "default": "X-Request-ID" },
+        "generate_if_missing": { "type": "boolean", "default": true }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean", "default": true },
+        "path": { "type": "string", "default": "/metrics" },
+        "ip_allowlist": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": ["127.0.0.1", "::1"]
+        }
+      }
+    },
+    "languages": {
+      "type": "object",
+      "properties": {
+        "js": {
+          "type": "object",
+          "properties": {
+            "max_memory_mb": { "type": "integer", "minimum": 1, "default": 50 },
+            "max_execution_time_ms": { "type": "integer", "minimum": 100, "default": 5000 },
+            "max_stack_size": { "type": "integer", "minimum": 128, "default": 1024 }
+          }
+        },
+        "wasm": {
+          "type": "object",
+          "properties": {
+            "max_memory_pages": { "type": "integer", "minimum": 1, "default": 256 },
+            "max_call_stack_depth": { "type": "integer", "minimum": 10, "default": 1000 }
+          }
+        }
+      }
+    },
+    "http2": {
+      "type": "object",
+      "properties": {
+        "max_concurrent_streams": { "type": "integer", "minimum": 1, "default": 100 },
+        "initial_stream_window_size": { "type": "integer", "minimum": 1024, "default": 65536 }
+      }
+    },
+    "http3": {
+      "type": "object",
+      "properties": {
+        "max_datagram_size": { "type": "integer", "minimum": 1000, "default": 1200 },
+        "idle_timeout_sec": { "type": "integer", "minimum": 1, "default": 30 }
+      }
+    },
+    "cache": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean", "default": false },
+        "ttl": { "type": "integer", "minimum": 1, "default": 300 },
+        "max_size_mb": { "type": "integer", "minimum": 1, "default": 50 },
+        "stale_while_revalidate": { "type": "integer", "minimum": 0, "default": 0 },
+        "vary": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": ["Accept-Encoding"]
+        },
+        "bypass_cookies": { "type": "boolean", "default": true },
+        "bypass_auth": { "type": "boolean", "default": true }
+      }
+    },
+    "tenant": {
+      "type": "object",
+      "properties": {
+        "docroot": { "type": "string" },
+        "domains": { "type": "array", "items": { "type": "string" } },
+        "limits": { "$ref": "#/$defs/limits" },
+        "permissions": { "$ref": "#/$defs/permissions" },
+        "cache": { "$ref": "#/$defs/cache" },
+        "routes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/route" }
+        }
+      },
+      "required": ["docroot"]
+    },
+    "limits": {
+      "type": "object",
+      "properties": {
+        "memory_mb": { "type": "integer", "minimum": 1, "default": 128 },
+        "max_connections": { "type": "integer", "minimum": 1, "default": 1000 },
+        "rate_limit": {
+          "type": "object",
+          "properties": {
+            "requests_per_minute": { "type": "integer", "minimum": 1 }
+          }
+        }
+      }
+    },
+    "permissions": {
+      "type": "object",
+      "properties": {
+        "fs": {
+          "type": "object",
+          "properties": {
+            "read": { "type": "boolean", "default": true },
+            "write": { "type": "boolean", "default": false },
+            "execute": { "type": "boolean", "default": false }
+          }
+        },
+        "network": {
+          "type": "object",
+          "properties": {
+            "outbound": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "route": {
+      "type": "object",
+      "properties": {
+        "path": { "type": "string" },
+        "target": { "type": "string" },
+        "cache": { "$ref": "#/$defs/cache" }
+      },
+      "required": ["path", "target"]
+    },
+    "includes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string" },
+          "optional": { "type": "boolean", "default": false }
+        },
+        "required": ["path"]
+      }
+    }
+  }
+}
